@@ -65,6 +65,8 @@ void Par_Init_ByFile()
    if ( SingleParMass )    NParAtt --; // exclude mass
    if ( SingleParType )    NParAtt --; // exclude type
 
+   // TODO: address the case when the number of loading fields and particle fields are different. add an option to use assignment function as done in init_byfile.cpp
+
    const int NParAttPerLoad = ( amr->Par->ParICFormat == PAR_IC_FORMAT_ID_ATT ) ? NParAtt : 1;
 
 

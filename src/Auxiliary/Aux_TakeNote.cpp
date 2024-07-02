@@ -5,8 +5,12 @@
 #endif
 #include <sched.h>
 #ifdef __APPLE__
+#if defined(__x86_64__)
 #include <cpuid.h>
+#else
+#include <pthread.h>
 #endif
+#endif // #ifdef __APPLE__
 #include "time.h"
 
 static int get_cpuid();
@@ -1909,6 +1913,7 @@ int get_cpuid()
    int CPU;
 
 #  ifdef __APPLE__
+#  ifdef __x86_64__
    uint32_t CPUInfo[4];
    __cpuid_count(1, 0, CPUInfo[0], CPUInfo[1], CPUInfo[2], CPUInfo[3]);
    if ((CPUInfo[3] & (1 << 9)) == 0) {
@@ -1917,6 +1922,9 @@ int get_cpuid()
       CPU = (unsigned)CPUInfo[1] >> 24;
    }
    if (CPU < 0) CPU = 0;
+#  else
+   CPU = std::hash<pthread_t>{}(pthread_self());
+#  endif // #ifdef __x86_64__
 #  else
    CPU = sched_getcpu();
 #  endif
