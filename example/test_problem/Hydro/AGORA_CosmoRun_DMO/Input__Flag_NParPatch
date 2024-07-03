@@ -1,13 +1,14 @@
+# Cells of the AMR simulations are adaptively refined by factors of two in each axis on a dark matter particle overdensity of four.
 # Level   Number_of_particles_per_patch
-      0                            4096
-      1                            4096
-      2                            4096
-      3                            4096
-      4                            4096
-      5                            4096
-      6                            4096
-      7                            4096
-      8                            4096
-      9                            4096
-     10                            4096
-     11                            4096
+      0                            2048
+      1                            2048
+      2                            2048
+      3                            2048
+      4                            2048
+      5                            2048
+      6                            2048
+      7                            2048
+      8                            2048
+      9                            2048
+     10                            2048
+     11                            2048
