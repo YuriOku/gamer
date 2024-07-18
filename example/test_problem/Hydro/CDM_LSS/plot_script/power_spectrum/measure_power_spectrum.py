@@ -8,7 +8,7 @@ import h5py
 target = "Data_000072" # snapshot at z=0
 Nmesh = 512  # mesh resolution
 
-snapshot = h5py.File("../.."+target, "r")
+snapshot = h5py.File("../../"+target, "r")
 
 npar = snapshot['Info']['KeyInfo']['Par_NPar']
 boxsize = snapshot['Info']['KeyInfo']['BoxSize']
