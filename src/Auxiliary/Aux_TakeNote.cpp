@@ -5,7 +5,8 @@
 #endif
 #include <sched.h>
 #ifdef __APPLE__
-#include <cpuid.h>
+#include <mach/mach.h>
+#include <mach/thread_act.h>
 #endif
 #include "time.h"
 
@@ -1909,14 +1910,42 @@ int get_cpuid()
    int CPU;
 
 #  ifdef __APPLE__
-   uint32_t CPUInfo[4];
-   __cpuid_count(1, 0, CPUInfo[0], CPUInfo[1], CPUInfo[2], CPUInfo[3]);
-   if ((CPUInfo[3] & (1 << 9)) == 0) {
-      CPU = -1;  /* no APIC on chip */
-   } else {
-      CPU = (unsigned)CPUInfo[1] >> 24;
-   }
-   if (CPU < 0) CPU = 0;
+   // Apple Silicon (ARM architecture) and Intel-based Macs
+   
+    host_basic_info_data_t hostInfo;
+    mach_msg_type_number_t infoCount = HOST_BASIC_INFO_COUNT;
+    kern_return_t ret = host_info(mach_host_self(), HOST_BASIC_INFO, (host_info_t)&hostInfo, &infoCount);
+    int NCPU;
+    if (ret == KERN_SUCCESS) {
+        NCPU = hostInfo.physical_cpu;
+    } else {
+        NCPU = -1;  // Error retrieving CPU info
+        printf("Error in host_info: %d\n", ret);
+    }
+
+    thread_act_t thread = mach_thread_self();
+    mach_msg_type_number_t count = THREAD_IDENTIFIER_INFO_COUNT;
+    thread_identifier_info_data_t info;
+    ret = thread_info(thread, THREAD_IDENTIFIER_INFO, (thread_info_t)&info, &count);
+    if (ret == KERN_SUCCESS) {
+        // Check if THREAD_AFFINITY_POLICY is supported
+        thread_affinity_policy_data_t policy;
+        mach_msg_type_number_t policy_count = THREAD_AFFINITY_POLICY_COUNT;
+        boolean_t get_default = FALSE;
+        ret = thread_policy_get(thread, THREAD_AFFINITY_POLICY, (thread_policy_t)&policy, &policy_count, &get_default);
+        if (ret == KERN_SUCCESS) {
+            CPU = policy.affinity_tag;
+        } else {
+            CPU = -1;  // Error retrieving CPU affinity
+            printf("Error in thread_policy_get: %d\n", ret);
+        }
+    } else {
+        CPU = -1;  // Error retrieving thread info
+        printf("Error in thread_info: %d\n", ret);
+    }
+    mach_port_deallocate(mach_task_self(), thread);
+
+    printf("CPU: %d\n", CPU);
 #  else
    CPU = sched_getcpu();
 #  endif
