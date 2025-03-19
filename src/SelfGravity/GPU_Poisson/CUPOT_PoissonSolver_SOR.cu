@@ -24,10 +24,14 @@
 #define RED_NTHREAD  POT_NTHREAD
 #define RED_SUM
 
+#ifdef DCU
+#  include "../../GPU_Utility/CUUTI_BlockReduction_Simple.cu"
+#else
 #ifdef SOR_USE_SHUFFLE
 #  include "../../GPU_Utility/CUUTI_BlockReduction_Shuffle.cu"
 #else
 #  include "../../GPU_Utility/CUUTI_BlockReduction_WarpSync.cu"
+#endif
 #endif
 
 
@@ -402,10 +406,14 @@ __global__ void CUPOT_PoissonSolver_SOR( const real g_Rho_Array    [][ RHO_NXT*R
       {
 //       (c2). perform parallel reduction to get the one-norm of residual
 //       ==============================================================================
+#        ifdef DCU
+         Residual_ThreadSum = BlockReduction_Simple ( Residual_ThreadSum );
+#        else
 #        ifdef SOR_USE_SHUFFLE
          Residual_ThreadSum = BlockReduction_Shuffle ( Residual_ThreadSum );
 #        else
          Residual_ThreadSum = BlockReduction_WarpSync( Residual_ThreadSum );
+#        endif
 #        endif
 
 //       broadcast to all threads

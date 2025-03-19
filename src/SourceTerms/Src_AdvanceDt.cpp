@@ -37,6 +37,9 @@ void Src_AdvanceDt( const int lv, const double TimeNew, const double TimeOld, co
    Src_WorkBeforeMajorFunc( lv, TimeNew, TimeOld, dt );
 
 // major source-term function
+#  ifdef DCU
+   Aux_Error( ERROR_INFO, "DCU is not yet supported in the source-term solver !!\nNeed to change SRC_BLOCK_SIZE to 256 and modify CUAPI_Asyn_SrcSolver() accordingly!!" );
+#  endif
    InvokeSolver( SRC_SOLVER, lv, TimeNew, TimeOld, dt, NULL_REAL, SaveSg_Flu, SaveSg_Mag, NULL_INT,
                  OverlapMPI, Overlap_Sync );
 

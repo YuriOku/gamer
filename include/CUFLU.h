@@ -433,6 +433,13 @@
 #  error : ERROR : unsupported hydro scheme in the makefile !!
 #endif
 
+#ifdef DCU
+#undef FLU_BLOCK_SIZE_X
+#undef FLU_BLOCK_SIZE_Y
+#define FLU_BLOCK_SIZE_X       256       // block thread = 256 for DCU
+#define FLU_BLOCK_SIZE_Y       1         // block thread = 256 for DCU
+#endif
+
 
 // 2. ELBDM kinematic solver
 //=========================================================================================
@@ -573,12 +580,19 @@ using complex_type = typename FFT::value_type;
 
 // 3. dt solver for fluid
 //=========================================================================================
+#     ifdef DCU
+#     define DT_FLU_BLOCK_SIZE      256
+#     else
 #     define DT_FLU_BLOCK_SIZE      512
+#     endif
 
 // use shuffle reduction in the KEPLER and later GPUs
 #  if ( GPU_ARCH == KEPLER  ||  GPU_ARCH == MAXWELL  ||  GPU_ARCH == PASCAL        ||  GPU_ARCH == VOLTA  ||  \
         GPU_ARCH == TURING  ||  GPU_ARCH == AMPERE   ||  GPU_ARCH == ADA_LOVELACE  ||  GPU_ARCH == HOPPER )
 #     define DT_FLU_USE_SHUFFLE
+#  endif
+#  defined(DCU) && defined(DT_FLU_USE_SHUFFLE)
+#  undef DT_FLU_USE_SHUFFLE
 #  endif
 
 
@@ -596,7 +610,11 @@ using complex_type = typename FFT::value_type;
       GPU_ARCH == TURING  ||  GPU_ARCH == AMPERE  ||  GPU_ARCH == ADA_LOVELACE  ||  GPU_ARCH == HOPPER )
 // CUPOT.h will define WARP_SIZE as well
 #  ifndef WARP_SIZE
-#  define WARP_SIZE 32
+#     ifdef DCU
+#     define WARP_SIZE 64
+#     else
+#     define WARP_SIZE 32
+#     endif
 #  endif
 #elif defined GPU
 #  error : UNKNOWN GPU_ARCH !!

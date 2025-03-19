@@ -14,10 +14,14 @@
 #define RED_NTHREAD  DT_FLU_BLOCK_SIZE
 #define RED_MAX
 
+#ifdef DCU
+#  include "../../GPU_Utility/CUUTI_BlockReduction_Simple.cu"
+#else
 #ifdef DT_FLU_USE_SHUFFLE
 #  include "../../GPU_Utility/CUUTI_BlockReduction_Shuffle.cu"
 #else
 #  include "../../GPU_Utility/CUUTI_BlockReduction_WarpSync.cu"
+#endif
 #endif
 
 #endif // #ifdef __CUDACC__
@@ -192,10 +196,14 @@ void CPU_dtSolver_HydroCFL  ( real g_dt_Array[], const real g_Flu_Array[][FLU_NI
 //    perform parallel reduction to get the maximum CFL speed in each thread block
 //    --> store in the thread 0
 #     ifdef __CUDACC__
+#     ifdef DCU
+      MaxCFL = BlockReduction_Simple ( MaxCFL );
+#     else
 #     ifdef DT_FLU_USE_SHUFFLE
       MaxCFL = BlockReduction_Shuffle ( MaxCFL );
 #     else
       MaxCFL = BlockReduction_WarpSync( MaxCFL );
+#     endif
 #     endif
       if ( threadIdx.x == 0 )
 #     endif // #ifdef __CUDACC__
@@ -217,10 +225,14 @@ void CPU_dtSolver_HydroCFL  ( real g_dt_Array[], const real g_Flu_Array[][FLU_NI
       } // CGPU_LOOP( t, CUBE(PS1) )
 
 #     ifdef __CUDACC__
+#     ifdef DCU
+      MaxCFL = BlockReduction_Simple ( MaxCFL );
+#     else
 #     ifdef DT_FLU_USE_SHUFFLE
       MaxCFL = BlockReduction_Shuffle ( MaxCFL );
 #     else
       MaxCFL = BlockReduction_WarpSync( MaxCFL );
+#     endif
 #     endif
       if ( threadIdx.x == 0 )
 #     endif // #ifdef __CUDACC__

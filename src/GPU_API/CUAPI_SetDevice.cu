@@ -173,8 +173,8 @@ void CUAPI_SetDevice( const int Mode )
 // (6-2) SOR Poisson solver
 #  if ( POT_SCHEME == SOR )
 #     ifdef SOR_USE_SHUFFLE
-      if ( DeviceProp.warpSize != 32 )
-         Aux_Error( ERROR_INFO, "warp size (%d) != 32 !!\n", DeviceProp.warpSize );
+      if ( DeviceProp.warpSize != WARP_SIZE )
+         Aux_Error( ERROR_INFO, "warp size (%d) != %d !!\n", DeviceProp.warpSize, WARP_SIZE );
 
       if ( DeviceProp.maxThreadsPerBlock > 1024 )
          Aux_Error( ERROR_INFO, "maximum number of threads per block (%d) > 1024 !!\n", DeviceProp.maxThreadsPerBlock );

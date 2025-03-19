@@ -15,10 +15,14 @@
 #define RED_NTHREAD  ( DT_GRA_BLOCK_SIZE )
 #define RED_MAX
 
+#ifdef DCU
+#  include "../../GPU_Utility/CUUTI_BlockReduction_Simple.cu"
+#else
 #ifdef DT_GRA_USE_SHUFFLE
 #  include "../../GPU_Utility/CUUTI_BlockReduction_Shuffle.cu"
 #else
 #  include "../../GPU_Utility/CUUTI_BlockReduction_WarpSync.cu"
+#endif
 #endif
 
 #endif // #ifdef __CUDACC__
@@ -189,10 +193,14 @@ void CPU_dtSolver_HydroGravity  ( real g_dt_Array[], const real g_Pot_Array[][ C
 //    perform parallel reduction to get the maximum acceleration in each thread block
 //    --> store in the thread 0
 #     ifdef __CUDACC__
+#     ifdef DCU
+      AccMax = BlockReduction_Simple ( AccMax );
+#     else
 #     ifdef DT_GRA_USE_SHUFFLE
       AccMax = BlockReduction_Shuffle ( AccMax );
 #     else
       AccMax = BlockReduction_WarpSync( AccMax );
+#     endif
 #     endif
       if ( threadIdx.x == 0 )
 #     endif // #ifdef __CUDACC__

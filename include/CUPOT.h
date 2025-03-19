@@ -113,6 +113,11 @@
 #        error : UNKNOWN GPU_ARCH !!
 #     endif
 #  endif // GPU_ARCH
+
+#  ifdef DCU
+#  undef POT_BLOCK_SIZE_Z
+#  define POT_BLOCK_SIZE_Z      2           // the block thread size = 256 for DCU
+#  endif // DCU
 #endif // POT_GHOST_SIZE
 
 
@@ -131,12 +136,18 @@
         GPU_ARCH == TURING  ||  GPU_ARCH == AMPERE   ||  GPU_ARCH == ADA_LOVELACE  ||  GPU_ARCH == HOPPER )
 #     define SOR_USE_SHUFFLE
 #  endif
+#  if defined(DCU) && defined(SOR_USE_SHUFFLE)
+#  undef SOR_USE_SHUFFLE
+#  endif
 
 // use padding to reduce shared memory bank conflict (optimized for POT_GHOST_SIZE == 5 only)
 // --> does NOT work for FLOAT8 due to the lack of shared memory
 // --> does NOT work with FERMI GPUs because SOR_USE_PADDING requires POT_BLOCK_SIZE_Z == 8 but FERMI does NOT support that
 #  ifndef FLOAT8
 #     define SOR_USE_PADDING
+#  endif
+#  if defined(DCU) && defined(SOR_USE_PADDING)
+#  undef SOR_USE_PADDING
 #  endif
 #  endif // #if ( POT_GHOST_SIZE == 5 )
 
@@ -189,6 +200,10 @@
 #   define DT_GRA_USE_SHUFFLE
 #endif
 
+#ifdef DCU
+#undef DT_GRA_USE_SHUFFLE
+#endif
+
 
 // warp size (which must be the same as the CUDA predefined constant "warpSize")
 // --> please refer to https://en.wikipedia.org/wiki/CUDA#Version_features_and_specifications
@@ -198,7 +213,11 @@
       GPU_ARCH == TURING  ||  GPU_ARCH == AMPERE  ||  GPU_ARCH == ADA_LOVELACE  ||  GPU_ARCH == HOPPER )
 // CUFLU.h will define WARP_SIZE as well
 #  ifndef WARP_SIZE
-#  define WARP_SIZE 32
+#     ifdef DCU
+#     define WARP_SIZE 64
+#     else
+#     define WARP_SIZE 32
+#     endif
 #  endif
 #elif defined GPU
 #  error : UNKNOWN GPU_ARCH !!
